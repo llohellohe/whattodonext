@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌟 任务小达人 🌟</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'ZCOOL KuaiLe', cursive, sans-serif;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #ffecd2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 浮动装饰 */
+        .floating-stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .floating-stars span {
+            position: absolute;
+            font-size: 20px;
+            animation: floatStar 6s infinite ease-in-out;
+            opacity: 0.6;
+        }
+
+        @keyframes floatStar {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        /* 导航栏 */
+        .nav-bar {
+            background: linear-gradient(90deg, #ff9a9e, #fad0c4, #a18cd1);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-bar button {
+            background: white;
+            border: 3px solid #ff6b9d;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-family: 'ZCOOL KuaiLe', cursive;
+            font-size: 16px;
+            color: #ff6b9d;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-bar button:hover, .nav-bar button.active {
+            background: #ff6b9d;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
+        }
+
+        /* 页面容器 */
+        .page {
+            display: none;
+            padding: 30px;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 标题 */
+        .page-title {
+            text-align: center;
+            font-size: 32px;
+            color: #ff6b9d;
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* 卡片 */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            border: 3px solid #ffd1dc;
+            transition: transform 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+        }
+
+        /* 表单元素 */
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px 18px;
+            border: 3px solid #ffd1dc;
+            border-radius: 15px;
+            font-size: 16px;
+            font-family: 'ZCOOL KuaiLe', cursive;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: #ff6b9d;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #ff9a9e, #ff6b9d);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-family: 'ZCOOL KuaiLe', cursive;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(255, 107, 157, 0.4);
+        }
+
+        .btn-small {
+            padding: 8px 18px;
+            font-size: 14px;
+        }
+
+        .btn-green {
+            background: linear-gradient(135deg, #a8e6cf, #56ab91);
+        }
+
+        .btn-green:hover {
+            box-shadow: 0 5px 20px rgba(86, 171, 145, 0.4);
+        }
+
+        .btn-purple {
+            background: linear-gradient(135deg, #a18cd1, #7c5cbf);
+        }
+
+        .btn-purple:hover {
+            box-shadow: 0 5px 20px rgba(161, 140, 209, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ffa8a8, #ff4757);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 5px 20px rgba(255, 71, 87, 0.4);
+        }
+
+        /* 任务列表 */
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 18px;
+            background: #fff5f7;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            border: 2px solid #ffd1dc;
+            transition: all 0.3s;
+        }
+
+        .task-item.completed {
+            background: #e8f8f5;
+            border-color: #a8e6cf;
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+
+        .task-item .task-name {
+            flex: 1;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .task-checkbox {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 3px solid #ff6b9d;
+            margin-right: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+
+        .task-checkbox.checked {
+            background: #ff6b9d;
+            border-color: #ff6b9d;
+        }
+
+        .task-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* 转盘样式 */
+        .wheel-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            flex-direction: column;
+        }
+
+        .wheel-container.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            width: min(85vw, 450px);
+            height: min(85vw, 450px);
+        }
+
+        canvas.wheel-canvas {
+            width: min(85vw, 450px);
+            height: min(85vw, 450px);
+        }
+
+        /* 大转盘全屏样式 */
+        #bigWheelModal .wheel-wrapper {
+            width: min(80vw, 80vh);
+            height: min(80vw, 80vh);
+        }
+
+        #bigWheelModal canvas.wheel-canvas {
+            width: min(80vw, 80vh);
+            height: min(80vw, 80vh);
+            box-shadow: 0 0 50px rgba(161, 140, 209, 0.6), 0 0 100px rgba(161, 140, 209, 0.3);
+            border: 8px solid gold;
+        }
+
+        #bigWheelModal .wheel-title {
+            font-size: 36px;
+        }
+
+        #bigWheelModal .wheel-result {
+            font-size: 30px;
+            padding: 18px 40px;
+        }
+
+        #bigWheelModal .wheel-pointer {
+            font-size: 55px;
+            top: -28px;
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 40px;
+            z-index: 10;
+            filter: drop-shadow(0 3px 5px rgba(0,0,0,0.3));
+        }
+
+        canvas.wheel-canvas {
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(255, 107, 157, 0.5), 0 0 60px rgba(255, 107, 157, 0.2);
+            border: 6px solid white;
+        }
+
+        .wheel-title {
+            color: white;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .wheel-result {
+            color: white;
+            font-size: 24px;
+            margin-top: 20px;
+            padding: 15px 30px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            display: none;
+        }
+
+        .wheel-result.show {
+            display: block;
+            animation: bounceIn 0.5s ease;
+        }
+
+        .wheel-result.show.highlight {
+            background: rgba(255, 215, 0, 0.4);
+            border: 2px solid gold;
+            font-size: 28px;
+            text-shadow: 0 0 10px rgba(255,215,0,0.8);
+            animation: bounceIn 0.5s ease, glowPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.4); }
+            50% { box-shadow: 0 0 30px rgba(255,215,0,0.8), 0 0 60px rgba(255,107,157,0.4); }
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .wheel-btn {
+            margin-top: 20px;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #333;
+            border: none;
+            border-radius: 30px;
+            padding: 15px 40px;
+            font-size: 20px;
+            font-family: 'ZCOOL KuaiLe', cursive;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .wheel-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .wheel-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 36px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .wheel-close:hover {
+            transform: rotate(90deg);
+        }
+
+        /* 项目列表 */
+        .project-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: #fff5f7;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            border: 2px solid #ffd1dc;
+        }
+
+        .project-item .project-name {
+            font-size: 18px;
+            color: #333;
+            flex: 1;
+        }
+
+        .project-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 奖励历史 */
+        .reward-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background: #f8f0ff;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border: 2px solid #e0c6ff;
+            font-size: 15px;
+        }
+
+        .reward-item .reward-emoji {
+            font-size: 24px;
+            margin-right: 12px;
+        }
+
+        .reward-item .reward-text {
+            flex: 1;
+            color: #555;
+        }
+
+        .reward-item .reward-time {
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+            border: 2px solid #ffd1dc;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff9a9e, #ff6b9d, #a18cd1);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        /* 大转盘信息 */
+        .big-wheel-info {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #fff5f7, #f8f0ff);
+            border-radius: 20px;
+            border: 3px dashed #ff6b9d;
+        }
+
+        .big-wheel-count {
+            font-size: 48px;
+            color: #ff6b9d;
+            margin: 10px 0;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+            font-size: 18px;
+        }
+
+        .empty-state .empty-emoji {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+
+        /* 彩带动画 */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2000;
+            overflow: hidden;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            animation: confettiFall 3s linear forwards;
+        }
+
+        @keyframes confettiFall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* 管理面板样式 */
+        .admin-section {
+            margin-bottom: 20px;
+        }
+
+        .admin-section h3 {
+            color: #7c5cbf;
+            margin-bottom: 12px;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #666;
+            font-size: 15px;
+        }
+
+        .task-input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .task-input-row input {
+            flex: 1;
+        }
+
+        .inline-tasks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .inline-task-tag {
+            background: #fff0f5;
+            border: 2px solid #ffd1dc;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .inline-task-tag .remove-task {
+            cursor: pointer;
+            color: #ff6b9d;
+            font-weight: bold;
+        }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .nav-bar {
+                flex-wrap: wrap;
+                padding: 10px;
+            }
+            .nav-bar button {
+                padding: 8px 16px;
+                font-size: 14px;
+            }
+            .page {
+                padding: 15px;
+            }
+            .wheel-wrapper {
+                width: 280px;
+                height: 280px;
+            }
+            canvas.wheel-canvas {
+                width: 280px;
+                height: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 浮动装饰 -->
+    <div class="floating-stars" id="floatingStars"></div>
+
+    <!-- 导航栏 -->
+    <div class="nav-bar">
+        <button class="active" onclick="switchPage('tasks')">🎯 做任务</button>
+        <button onclick="switchPage('bigwheel')">🎡 大转盘</button>
+        <button onclick="switchPage('history')">🏆 奖励记录</button>
+        <button onclick="switchPage('admin')">⚙️ 后台管理</button>
+    </div>
+
+    <!-- 任务页面 -->
+    <div class="page active" id="page-tasks">
+        <h1 class="page-title">🎯 今日任务</h1>
+        <div id="taskPageContent"></div>
+    </div>
+
+    <!-- 大转盘页面 -->
+    <div class="page" id="page-bigwheel">
+        <h1 class="page-title">🎡 幸运大转盘</h1>
+        <div class="big-wheel-info">
+            <p style="font-size: 20px; color: #666;">完成所有任务就可以转大转盘啦！</p>
+            <div class="big-wheel-count" id="bigWheelCount">0</div>
+            <p style="font-size: 18px; color: #999;">可用抽奖次数</p>
+            <button class="btn btn-purple" style="margin-top: 20px; font-size: 20px; padding: 15px 40px;" onclick="openBigWheel()" id="bigWheelBtn">
+                🎡 开始抽奖！
+            </button>
+        </div>
+    </div>
+
+    <!-- 奖励记录页面 -->
+    <div class="page" id="page-history">
+        <h1 class="page-title">🏆 奖励记录</h1>
+        <div id="rewardHistory"></div>
+    </div>
+
+    <!-- 后台管理页面 -->
+    <div class="page" id="page-admin">
+        <h1 class="page-title">⚙️ 后台管理</h1>
+        
+        <div class="card">
+            <div class="admin-section">
+                <h3>📋 创建新项目</h3>
+                <div class="form-group">
+                    <label>项目名称：</label>
+                    <input type="text" id="newProjectName" placeholder="例如：周一任务清单">
+                </div>
+                <div class="form-group">
+                    <label>添加任务：</label>
+                    <div class="task-input-row">
+                        <input type="text" id="newTaskName" placeholder="输入任务名称" onkeypress="if(event.key==='Enter')addTaskToNew()">
+                        <button class="btn btn-small btn-green" onclick="addTaskToNew()">+ 添加</button>
+                    </div>
+                    <div class="inline-tasks" id="newTasksList"></div>
+                </div>
+                <button class="btn" onclick="createProject()">✨ 创建项目</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="admin-section">
+                <h3>📂 已有项目</h3>
+                <div id="adminProjectList"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="admin-section">
+                <h3>✅ 任务管理</h3>
+                <p style="color:#999; font-size:14px; margin-bottom:10px;">管理当前项目的任务（修改状态、增加、删除）</p>
+                <div id="adminTaskStatus"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="admin-section">
+                <h3>🎯 小转盘奖励配置</h3>
+                <div id="adminSmallWheel"></div>
+                <div class="task-input-row" style="margin-top: 12px;">
+                    <input type="text" id="newSmallPrizeText" placeholder="奖励名称">
+                    <input type="text" id="newSmallPrizeEmoji" placeholder="emoji" style="width:60px; flex:none;">
+                    <button class="btn btn-small btn-green" onclick="addSmallPrize()">+ 添加</button>
+                </div>
+                <button class="btn btn-small" style="margin-top: 12px;" onclick="testSmallWheel()">🧪 测试小转盘</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="admin-section">
+                <h3>🎡 大转盘奖励配置</h3>
+                <div id="adminBigWheel"></div>
+                <div class="task-input-row" style="margin-top: 12px;">
+                    <input type="text" id="newBigPrizeText" placeholder="奖励名称">
+                    <input type="text" id="newBigPrizeEmoji" placeholder="emoji" style="width:60px; flex:none;">
+                    <button class="btn btn-small btn-green" onclick="addBigPrize()">+ 添加</button>
+                </div>
+                <button class="btn btn-small btn-purple" style="margin-top: 12px;" onclick="testBigWheel()">🧪 测试大转盘</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="admin-section">
+                <h3>🗑️ 奖励记录管理</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+                    <button class="btn btn-small btn-danger" onclick="clearRewards('all')">清空所有奖励</button>
+                    <button class="btn btn-small" onclick="clearRewards('small')">清空小转盘奖励</button>
+                    <button class="btn btn-small btn-purple" onclick="clearRewards('big')">清空大转盘奖励</button>
+                </div>
+                <div id="adminRewardsList"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="admin-section">
+                <h3>🔄 数据管理</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-danger btn-small" onclick="clearAllData()">🗑️ 清空所有数据</button>
+                    <button class="btn btn-small btn-green" onclick="exportData()">📤 导出数据</button>
+                    <button class="btn btn-small btn-purple" onclick="document.getElementById('importFile').click()">📥 导入数据</button>
+                    <input type="file" id="importFile" style="display:none" accept=".json" onchange="importData(event)">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 小转盘弹窗 -->
+    <div class="wheel-container" id="smallWheelModal">
+        <span class="wheel-close" onclick="closeSmallWheel()">✕</span>
+        <div class="wheel-title">🎉 恭喜完成任务！来抽个奖吧～</div>
+        <div class="wheel-wrapper">
+            <div class="wheel-pointer">📍</div>
+            <canvas class="wheel-canvas" id="smallWheelCanvas" width="900" height="900"></canvas>
+        </div>
+        <div class="wheel-result" id="smallWheelResult"></div>
+        <button class="wheel-btn" id="smallWheelSpinBtn" onclick="spinSmallWheel()">🌟 转一转！</button>
+    </div>
+
+    <!-- 大转盘弹窗 -->
+    <div class="wheel-container" id="bigWheelModal">
+        <span class="wheel-close" onclick="closeBigWheel()">✕</span>
+        <div class="wheel-title">🎡 幸运大转盘！</div>
+        <div class="wheel-wrapper">
+            <div class="wheel-pointer">📍</div>
+            <canvas class="wheel-canvas" id="bigWheelCanvas" width="1200" height="1200"></canvas>
+        </div>
+        <div class="wheel-result" id="bigWheelResult"></div>
+        <button class="wheel-btn" id="bigWheelSpinBtn" onclick="spinBigWheel()">🎡 转动大转盘！</button>
+    </div>
+
+    <!-- 彩带容器 -->
+    <div class="confetti-container" id="confettiContainer"></div>
+
+    <script>
+        // ==================== 数据管理 ====================
+        const STORAGE_KEY = 'whattodonext_data';
+
+        function getData() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : {
+                projects: [],
+                activeProjectId: null,
+                bigWheelSpins: 0,
+                rewards: []
+            };
+        }
+
+        function saveData(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        // ==================== 小转盘奖品 ====================
+        const defaultSmallPrizes = [
+            { text: '大转盘+1', emoji: '🎡', color: '#FF6B9D', action: 'bigwheel' },
+            { text: '额外时长', emoji: '⏰', color: '#4ECDC4', action: 'time' },
+            { text: '谢谢惠顾', emoji: '😊', color: '#FFD93D', action: 'none' },
+            { text: '一口蜜雪', emoji: '🧋', color: '#6BCB77', action: 'drink' },
+            { text: '爸爸5个俯卧撑', emoji: '💪', color: '#A18CD1', action: 'pushup_dad' },
+            { text: '大转盘+1', emoji: '🎡', color: '#FF8A5C', action: 'bigwheel' },
+            { text: '额外时长', emoji: '⏰', color: '#45B7D1', action: 'time' },
+            { text: '谢谢惠顾', emoji: '😊', color: '#F9C74F', action: 'none' },
+        ];
+
+        // ==================== 大转盘奖品 ====================
+        const defaultBigPrizes = [
+            { text: '谢谢惠顾', emoji: '😊', color: '#FFD93D', action: 'none' },
+            { text: '蛤蟆警长介绍', emoji: '🐸', color: '#6BCB77', action: 'story' },
+            { text: '2口蜜雪冰城', emoji: '🧋', color: '#45B7D1', action: 'drink2' },
+            { text: '5-7分钟时长', emoji: '⏰', color: '#4ECDC4', action: 'bigtime' },
+            { text: '自己3个俯卧撑', emoji: '🏋️', color: '#FF8A5C', action: 'pushup_self' },
+            { text: '爸爸5个俯卧撑', emoji: '💪', color: '#A18CD1', action: 'pushup_dad' },
+            { text: '2口蜜雪冰城', emoji: '🧋', color: '#FF6B9D', action: 'drink2' },
+            { text: '5-7分钟时长', emoji: '⏰', color: '#F9C74F', action: 'bigtime' },
+        ];
+
+        const prizeColors = ['#FF6B9D', '#4ECDC4', '#FFD93D', '#6BCB77', '#A18CD1', '#FF8A5C', '#45B7D1', '#F9C74F', '#E88D67', '#7EC8E3'];
+
+        function getSmallWheelPrizes() {
+            const data = getData();
+            return data.smallPrizes || defaultSmallPrizes;
+        }
+
+        function getBigWheelPrizes() {
+            const data = getData();
+            return data.bigPrizes || defaultBigPrizes;
+        }
+
+        // ==================== 页面切换 ====================
+        function switchPage(pageName) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + pageName).classList.add('active');
+            document.querySelectorAll('.nav-bar button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (pageName === 'tasks') renderTaskPage();
+            if (pageName === 'bigwheel') renderBigWheelPage();
+            if (pageName === 'history') renderHistory();
+            if (pageName === 'admin') renderAdmin();
+        }
+
+        // ==================== 任务页面 ====================
+        function renderTaskPage() {
+            const data = getData();
+            const container = document.getElementById('taskPageContent');
+            
+            if (!data.activeProjectId || !data.projects.length) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-emoji">📋</div>
+                        <p>还没有进行中的项目哦～</p>
+                        <p style="margin-top:10px">去后台管理创建一个吧！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const project = data.projects.find(p => p.id === data.activeProjectId);
+            if (!project) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-emoji">😅</div><p>项目不存在了</p></div>`;
+                return;
+            }
+
+            const completedCount = project.tasks.filter(t => t.completed).length;
+            const totalCount = project.tasks.length;
+            const progress = totalCount > 0 ? (completedCount / totalCount * 100) : 0;
+            const allDone = completedCount === totalCount && totalCount > 0;
+
+            let html = `
+                <div class="card">
+                    <h3 style="color: #7c5cbf; margin-bottom: 10px; font-size: 22px;">
+                        📌 ${project.name}
+                    </h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                    <p style="text-align: center; color: #888; margin-bottom: 15px;">
+                        完成 ${completedCount} / ${totalCount} 个任务
+                    </p>
+            `;
+
+            project.tasks.forEach((task, index) => {
+                html += `
+                    <div class="task-item ${task.completed ? 'completed' : ''}">
+                        <div class="task-checkbox ${task.completed ? 'checked' : ''}" 
+                             onclick="${task.completed ? '' : `completeTask('${project.id}', ${index})`}">
+                        </div>
+                        <span class="task-name">${task.completed ? '✅ ' : '⭐ '}${task.name}</span>
+                    </div>
+                `;
+            });
+
+            if (allDone && !project.bigWheelClaimed) {
+                html += `
+                    <div style="text-align: center; margin-top: 20px; padding: 20px; background: linear-gradient(135deg, #fff5f7, #f8f0ff); border-radius: 15px; border: 3px dashed #ff6b9d;">
+                        <p style="font-size: 22px; color: #ff6b9d;">🎉 太棒了！所有任务都完成了！</p>
+                        <button class="btn btn-purple" style="margin-top: 15px;" onclick="claimBigWheelReward('${project.id}')">
+                            🎁 领取大转盘奖励
+                        </button>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+
+            // 项目选择
+            if (data.projects.length > 1) {
+                html += `<div class="card"><h3 style="color:#7c5cbf; margin-bottom:10px;">切换项目</h3>`;
+                data.projects.forEach(p => {
+                    const isActive = p.id === data.activeProjectId;
+                    html += `
+                        <div class="project-item" style="${isActive ? 'border-color: #a18cd1; background: #f8f0ff;' : ''}">
+                            <span class="project-name">${isActive ? '👉 ' : ''}${p.name}</span>
+                            ${!isActive ? `<button class="btn btn-small btn-purple" onclick="switchProject('${p.id}')">切换</button>` : ''}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function completeTask(projectId, taskIndex) {
+            const data = getData();
+            const project = data.projects.find(p => p.id === projectId);
+            if (project && !project.tasks[taskIndex].completed) {
+                project.tasks[taskIndex].completed = true;
+                
+                // 检查是否提前完成了下一个未完成任务（即跳过了前面的）
+                // 逻辑：如果完成的不是第一个未完成的任务，说明是提前完成的
+                let firstUncompletedIndex = -1;
+                for (let i = 0; i < project.tasks.length; i++) {
+                    if (!project.tasks[i].completed && i !== taskIndex) {
+                        firstUncompletedIndex = i;
+                        break;
+                    }
+                }
+                // 如果在当前任务之前还有未完成的任务，则是提前完成
+                let earlyBonus = false;
+                if (firstUncompletedIndex !== -1 && firstUncompletedIndex < taskIndex) {
+                    earlyBonus = true;
+                    data.bigWheelSpins += 1;
+                }
+                
+                saveData(data);
+                renderTaskPage();
+                // 打开小转盘
+                setTimeout(() => {
+                    openSmallWheel();
+                    if (earlyBonus) {
+                        setTimeout(() => alert('🌟 提前完成任务！额外获得 1 次大转盘抽奖机会！'), 300);
+                    }
+                }, 500);
+            }
+        }
+
+        function claimBigWheelReward(projectId) {
+            const data = getData();
+            const project = data.projects.find(p => p.id === projectId);
+            if (project && !project.bigWheelClaimed) {
+                project.bigWheelClaimed = true;
+                data.bigWheelSpins += 3;
+                saveData(data);
+                showConfetti();
+                renderTaskPage();
+                alert('🎉 获得 3 次大转盘抽奖机会！快去转转吧～');
+            }
+        }
+
+        function switchProject(projectId) {
+            const data = getData();
+            data.activeProjectId = projectId;
+            saveData(data);
+            renderTaskPage();
+        }
+
+        // ==================== 小转盘 ====================
+        let smallWheelAngle = 0;
+        let smallWheelSpinning = false;
+
+        function openSmallWheel() {
+            document.getElementById('smallWheelModal').classList.add('show');
+            document.getElementById('smallWheelResult').classList.remove('show');
+            document.getElementById('smallWheelSpinBtn').style.display = 'block';
+            drawWheel('smallWheelCanvas', getSmallWheelPrizes(), smallWheelAngle);
+        }
+
+        function closeSmallWheel() {
+            document.getElementById('smallWheelModal').classList.remove('show');
+        }
+
+        function spinSmallWheel() {
+            if (smallWheelSpinning) return;
+            smallWheelSpinning = true;
+            document.getElementById('smallWheelSpinBtn').style.display = 'none';
+            
+            const prizes = getSmallWheelPrizes();
+            const prizeIndex = Math.floor(Math.random() * prizes.length);
+            const segmentAngle = 360 / prizes.length;
+            const targetAngle = 360 * 5 + (270 - prizeIndex * segmentAngle - segmentAngle / 2);
+            
+            animateWheel('smallWheelCanvas', prizes, targetAngle, () => {
+                smallWheelAngle = targetAngle % 360;
+                smallWheelSpinning = false;
+                
+                const prize = prizes[prizeIndex];
+                let resultText = `${prize.emoji} ${prize.text}`;
+                const isWin = prize.action !== 'none';
+                
+                // 处理额外时长
+                if (prize.action === 'time') {
+                    const minutes = Math.floor(Math.random() * 2) + 1;
+                    resultText = `⏰ 额外时长 ${minutes} 分钟！`;
+                }
+                
+                // 处理大转盘次数
+                if (prize.action === 'bigwheel') {
+                    const data = getData();
+                    data.bigWheelSpins += 1;
+                    saveData(data);
+                }
+
+                const resultEl = document.getElementById('smallWheelResult');
+                resultEl.textContent = isWin ? `🎊 恭喜！${resultText}` : resultText;
+                resultEl.className = 'wheel-result show' + (isWin ? ' highlight' : '');
+                
+                // 记录奖励
+                recordReward('小转盘', resultText, prize.emoji);
+                if (isWin) {
+                    showBigCelebration();
+                } else {
+                    showConfetti();
+                }
+            });
+        }
+
+        // ==================== 大转盘 ====================
+        let bigWheelAngle = 0;
+        let bigWheelSpinning = false;
+
+        function renderBigWheelPage() {
+            const data = getData();
+            document.getElementById('bigWheelCount').textContent = data.bigWheelSpins;
+            const btn = document.getElementById('bigWheelBtn');
+            btn.disabled = data.bigWheelSpins <= 0;
+            btn.style.opacity = data.bigWheelSpins > 0 ? '1' : '0.5';
+        }
+
+        function openBigWheel() {
+            const data = getData();
+            if (data.bigWheelSpins <= 0) {
+                alert('😅 没有大转盘抽奖次数了，快去完成任务吧！');
+                return;
+            }
+            document.getElementById('bigWheelModal').classList.add('show');
+            document.getElementById('bigWheelResult').classList.remove('show');
+            document.getElementById('bigWheelSpinBtn').style.display = 'block';
+            drawWheel('bigWheelCanvas', getBigWheelPrizes(), bigWheelAngle);
+        }
+
+        function closeBigWheel() {
+            document.getElementById('bigWheelModal').classList.remove('show');
+            renderBigWheelPage();
+        }
+
+        function spinBigWheel() {
+            if (bigWheelSpinning) return;
+            const data = getData();
+            if (data.bigWheelSpins <= 0) return;
+            
+            data.bigWheelSpins -= 1;
+            saveData(data);
+            
+            bigWheelSpinning = true;
+            document.getElementById('bigWheelSpinBtn').style.display = 'none';
+            
+            const prizes = getBigWheelPrizes();
+            const prizeIndex = Math.floor(Math.random() * prizes.length);
+            const segmentAngle = 360 / prizes.length;
+            const targetAngle = 360 * 6 + (270 - prizeIndex * segmentAngle - segmentAngle / 2);
+            
+            animateWheel('bigWheelCanvas', prizes, targetAngle, () => {
+                bigWheelAngle = targetAngle % 360;
+                bigWheelSpinning = false;
+                
+                const prize = prizes[prizeIndex];
+                let resultText = `${prize.emoji} ${prize.text}`;
+                const isWin = prize.action !== 'none';
+                
+                if (prize.action === 'bigtime') {
+                    const minutes = Math.floor(Math.random() * 2) + 1;
+                    resultText = `⏰ 额外时长 ${minutes} 分钟！`;
+                }
+
+                const resultEl = document.getElementById('bigWheelResult');
+                resultEl.textContent = isWin ? `🎊 恭喜！${resultText}` : resultText;
+                resultEl.className = 'wheel-result show' + (isWin ? ' highlight' : '');
+                
+                recordReward('大转盘', resultText, prize.emoji);
+                if (isWin) {
+                    showBigCelebration();
+                } else {
+                    showConfetti();
+                }
+                renderBigWheelPage();
+            });
+        }
+
+        // ==================== 转盘绘制和动画 ====================
+        function drawWheel(canvasId, prizes, rotation) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = canvas.width / 2 - 10;
+            const segmentAngle = (2 * Math.PI) / prizes.length;
+            
+            // 根据canvas大小动态计算字体
+            const scale = canvas.width / 680;
+            const emojiSize = Math.round(44 * scale);
+            const textSize = Math.round(36 * scale);
+            const charSpace = Math.round(40 * scale);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate((rotation * Math.PI) / 180);
+
+            prizes.forEach((prize, i) => {
+                const startAngle = i * segmentAngle;
+                const endAngle = startAngle + segmentAngle;
+
+                // 绘制扇形
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = prize.color;
+                ctx.fill();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3 * scale;
+                ctx.stroke();
+
+                // 绘制文字（沿半径方向竖排）
+                ctx.save();
+                ctx.rotate(startAngle + segmentAngle / 2);
+                
+                // emoji 在外圈
+                ctx.font = `bold ${emojiSize}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = 'white';
+                ctx.fillText(prize.emoji, radius * 0.83, 0);
+                
+                // 文字竖排在扇区中间（从中心向外读）
+                ctx.font = `bold ${textSize}px "ZCOOL KuaiLe", sans-serif`;
+                ctx.fillStyle = 'white';
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 3 * scale;
+                const text = prize.text;
+                const innerStart = radius * 0.2;
+                for (let c = 0; c < text.length; c++) {
+                    ctx.fillText(text[c], innerStart + c * charSpace, 0);
+                }
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            });
+
+            ctx.restore();
+        }
+
+        function animateWheel(canvasId, prizes, targetAngle, callback) {
+            const startAngle = canvasId === 'smallWheelCanvas' ? smallWheelAngle : bigWheelAngle;
+            const duration = 4000;
+            const startTime = Date.now();
+
+            function easeOutCubic(t) {
+                return 1 - Math.pow(1 - t, 3);
+            }
+
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = easeOutCubic(progress);
+                const currentAngle = startAngle + (targetAngle - startAngle) * eased;
+
+                drawWheel(canvasId, prizes, currentAngle);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    callback();
+                }
+            }
+
+            animate();
+        }
+
+        // ==================== 奖励记录 ====================
+        function recordReward(type, text, emoji) {
+            const data = getData();
+            const project = data.projects.find(p => p.id === data.activeProjectId);
+            data.rewards.unshift({
+                type,
+                text,
+                emoji,
+                projectId: data.activeProjectId || '',
+                projectName: project ? project.name : '未知项目',
+                time: new Date().toLocaleString('zh-CN')
+            });
+            // 只保留最近100条
+            if (data.rewards.length > 100) data.rewards = data.rewards.slice(0, 100);
+            saveData(data);
+        }
+
+        function renderHistory() {
+            const data = getData();
+            const container = document.getElementById('rewardHistory');
+            
+            if (!data.rewards || data.rewards.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-emoji">🏆</div>
+                        <p>还没有奖励记录哦～</p>
+                        <p style="margin-top:10px">快去完成任务抽奖吧！</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // 按项目分组
+            const projectGroups = {};
+            data.rewards.forEach(r => {
+                const pName = r.projectName || '未知项目';
+                if (!projectGroups[pName]) projectGroups[pName] = { big: [], small: [] };
+                if (r.type === '大转盘') {
+                    projectGroups[pName].big.push(r);
+                } else {
+                    projectGroups[pName].small.push(r);
+                }
+            });
+
+            let html = '';
+            Object.keys(projectGroups).forEach(projectName => {
+                const group = projectGroups[projectName];
+                html += `<div class="card">
+                    <h3 style="color: #7c5cbf; margin-bottom: 15px; font-size: 20px;">📌 ${projectName}</h3>`;
+
+                // 大转盘奖励
+                if (group.big.length > 0) {
+                    html += `<p style="color:#7c5cbf; font-size:16px; margin-bottom:8px;">🎡 大转盘奖励</p>`;
+                    group.big.forEach(r => {
+                        html += `
+                            <div class="reward-item" style="background: #f0e6ff; border-color: #d4b8ff;">
+                                <span class="reward-emoji">${r.emoji}</span>
+                                <span class="reward-text">${r.text}</span>
+                                <span class="reward-time">${r.time}</span>
+                            </div>
+                        `;
+                    });
+                }
+
+                // 小转盘奖励
+                if (group.small.length > 0) {
+                    html += `<p style="color:#ff6b9d; font-size:16px; margin: 12px 0 8px 0;">🎯 小转盘奖励</p>`;
+                    group.small.forEach(r => {
+                        html += `
+                            <div class="reward-item">
+                                <span class="reward-emoji">${r.emoji}</span>
+                                <span class="reward-text">${r.text}</span>
+                                <span class="reward-time">${r.time}</span>
+                            </div>
+                        `;
+                    });
+                }
+
+                html += '</div>';
+            });
+
+            container.innerHTML = html;
+        }
+
+        // ==================== 后台管理 ====================
+        let newTasksList = [];
+
+        function addTaskToNew() {
+            const input = document.getElementById('newTaskName');
+            const name = input.value.trim();
+            if (!name) return;
+            newTasksList.push(name);
+            input.value = '';
+            renderNewTasks();
+        }
+
+        function removeNewTask(index) {
+            newTasksList.splice(index, 1);
+            renderNewTasks();
+        }
+
+        function renderNewTasks() {
+            const container = document.getElementById('newTasksList');
+            container.innerHTML = newTasksList.map((t, i) => `
+                <span class="inline-task-tag">
+                    ⭐ ${t}
+                    <span class="remove-task" onclick="removeNewTask(${i})">✕</span>
+                </span>
+            `).join('');
+        }
+
+        function createProject() {
+            const name = document.getElementById('newProjectName').value.trim();
+            if (!name) { alert('请输入项目名称！'); return; }
+            if (newTasksList.length === 0) { alert('请至少添加一个任务！'); return; }
+
+            const data = getData();
+            const project = {
+                id: 'proj_' + Date.now(),
+                name,
+                tasks: newTasksList.map(t => ({ name: t, completed: false })),
+                bigWheelClaimed: false,
+                createdAt: new Date().toISOString()
+            };
+            data.projects.push(project);
+            if (!data.activeProjectId) data.activeProjectId = project.id;
+            saveData(data);
+
+            // 清空表单
+            document.getElementById('newProjectName').value = '';
+            newTasksList = [];
+            renderNewTasks();
+            renderAdmin();
+            alert('🎉 项目创建成功！');
+        }
+
+        function renderAdmin() {
+            const data = getData();
+            const container = document.getElementById('adminProjectList');
+            
+            if (!data.projects.length) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-emoji">📂</div><p>还没有项目</p></div>';
+            } else {
+                let html = '';
+                data.projects.forEach(p => {
+                    const completedCount = p.tasks.filter(t => t.completed).length;
+                    const isActive = p.id === data.activeProjectId;
+                    html += `
+                        <div class="project-item" style="${isActive ? 'border-color: #a18cd1; background: #f8f0ff;' : ''}">
+                            <div>
+                                <span class="project-name">${isActive ? '👉 ' : ''}${p.name}</span>
+                                <span style="color:#aaa; font-size:13px; margin-left:10px;">
+                                    (${completedCount}/${p.tasks.length} 完成)
+                                </span>
+                            </div>
+                            <div class="project-actions">
+                                ${!isActive ? `<button class="btn btn-small btn-purple" onclick="setActiveProject('${p.id}')">设为当前</button>` : ''}
+                                <button class="btn btn-small" onclick="resetProject('${p.id}')">🔄 重置</button>
+                                <button class="btn btn-small btn-danger" onclick="deleteProject('${p.id}')">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            }
+
+            // 渲染任务状态管理
+            renderAdminTaskStatus();
+            // 渲染转盘配置
+            renderAdminPrizes();
+            // 渲染奖励管理
+            renderAdminRewards();
+        }
+
+        // ==================== 任务状态管理 ====================
+        function renderAdminTaskStatus() {
+            const data = getData();
+            const container = document.getElementById('adminTaskStatus');
+            
+            if (!data.activeProjectId) {
+                container.innerHTML = '<p style="color:#aaa;">请先选择一个当前项目</p>';
+                return;
+            }
+
+            const project = data.projects.find(p => p.id === data.activeProjectId);
+            if (!project) { container.innerHTML = ''; return; }
+
+            let html = `<p style="color:#7c5cbf; font-size:16px; margin-bottom:10px;">📌 ${project.name}</p>`;
+            project.tasks.forEach((task, index) => {
+                html += `
+                    <div class="task-item" style="justify-content: space-between;">
+                        <span class="task-name">${task.completed ? '✅' : '⭐'} ${task.name}</span>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn btn-small ${task.completed ? 'btn-danger' : 'btn-green'}" 
+                                    onclick="toggleTaskStatus('${project.id}', ${index})">
+                                ${task.completed ? '↩️ 取消' : '✅ 完成'}
+                            </button>
+                            <button class="btn btn-small btn-danger" onclick="deleteTaskFromProject('${project.id}', ${index})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+            // 添加新任务输入
+            html += `
+                <div class="task-input-row" style="margin-top: 12px;">
+                    <input type="text" id="addTaskToProjectInput" placeholder="输入新任务名称" onkeypress="if(event.key==='Enter')addTaskToProject('${project.id}')">
+                    <button class="btn btn-small btn-green" onclick="addTaskToProject('${project.id}')">+ 添加任务</button>
+                </div>
+            `;
+            container.innerHTML = html;
+        }
+
+        function toggleTaskStatus(projectId, taskIndex) {
+            const data = getData();
+            const project = data.projects.find(p => p.id === projectId);
+            if (project) {
+                project.tasks[taskIndex].completed = !project.tasks[taskIndex].completed;
+                // 如果取消了任何任务完成，重置bigWheelClaimed
+                const allDone = project.tasks.every(t => t.completed);
+                if (!allDone) project.bigWheelClaimed = false;
+                saveData(data);
+                renderAdmin();
+            }
+        }
+
+        function addTaskToProject(projectId) {
+            const input = document.getElementById('addTaskToProjectInput');
+            const name = input.value.trim();
+            if (!name) return;
+            const data = getData();
+            const project = data.projects.find(p => p.id === projectId);
+            if (project) {
+                project.tasks.push({ name, completed: false });
+                project.bigWheelClaimed = false;
+                saveData(data);
+                renderAdmin();
+            }
+        }
+
+        function deleteTaskFromProject(projectId, taskIndex) {
+            if (!confirm('确定要删除这个任务吗？')) return;
+            const data = getData();
+            const project = data.projects.find(p => p.id === projectId);
+            if (project) {
+                project.tasks.splice(taskIndex, 1);
+                // 如果所有剩余任务都完成了，保持bigWheelClaimed状态
+                saveData(data);
+                renderAdmin();
+            }
+        }
+
+        // ==================== 转盘奖励配置 ====================
+        function renderAdminPrizes() {
+            const smallPrizes = getSmallWheelPrizes();
+            const bigPrizes = getBigWheelPrizes();
+
+            // 小转盘
+            let smallHtml = '';
+            smallPrizes.forEach((p, i) => {
+                smallHtml += `
+                    <div class="task-item" style="justify-content: space-between;">
+                        <span>${p.emoji} ${p.text}</span>
+                        <button class="btn btn-small btn-danger" onclick="removeSmallPrize(${i})">✕</button>
+                    </div>
+                `;
+            });
+            document.getElementById('adminSmallWheel').innerHTML = smallHtml;
+
+            // 大转盘
+            let bigHtml = '';
+            bigPrizes.forEach((p, i) => {
+                bigHtml += `
+                    <div class="task-item" style="justify-content: space-between;">
+                        <span>${p.emoji} ${p.text}</span>
+                        <button class="btn btn-small btn-danger" onclick="removeBigPrize(${i})">✕</button>
+                    </div>
+                `;
+            });
+            document.getElementById('adminBigWheel').innerHTML = bigHtml;
+        }
+
+        function addSmallPrize() {
+            const text = document.getElementById('newSmallPrizeText').value.trim();
+            const emoji = document.getElementById('newSmallPrizeEmoji').value.trim() || '🎁';
+            if (!text) { alert('请输入奖励名称！'); return; }
+            
+            const data = getData();
+            if (!data.smallPrizes) data.smallPrizes = [...defaultSmallPrizes];
+            const colorIndex = data.smallPrizes.length % prizeColors.length;
+            data.smallPrizes.push({ text, emoji, color: prizeColors[colorIndex], action: 'custom' });
+            saveData(data);
+            
+            document.getElementById('newSmallPrizeText').value = '';
+            document.getElementById('newSmallPrizeEmoji').value = '';
+            renderAdminPrizes();
+        }
+
+        function removeSmallPrize(index) {
+            const data = getData();
+            if (!data.smallPrizes) data.smallPrizes = [...defaultSmallPrizes];
+            data.smallPrizes.splice(index, 1);
+            if (data.smallPrizes.length === 0) delete data.smallPrizes;
+            saveData(data);
+            renderAdminPrizes();
+        }
+
+        function addBigPrize() {
+            const text = document.getElementById('newBigPrizeText').value.trim();
+            const emoji = document.getElementById('newBigPrizeEmoji').value.trim() || '🎁';
+            if (!text) { alert('请输入奖励名称！'); return; }
+            
+            const data = getData();
+            if (!data.bigPrizes) data.bigPrizes = [...defaultBigPrizes];
+            const colorIndex = data.bigPrizes.length % prizeColors.length;
+            data.bigPrizes.push({ text, emoji, color: prizeColors[colorIndex], action: 'custom' });
+            saveData(data);
+            
+            document.getElementById('newBigPrizeText').value = '';
+            document.getElementById('newBigPrizeEmoji').value = '';
+            renderAdminPrizes();
+        }
+
+        function removeBigPrize(index) {
+            const data = getData();
+            if (!data.bigPrizes) data.bigPrizes = [...defaultBigPrizes];
+            data.bigPrizes.splice(index, 1);
+            if (data.bigPrizes.length === 0) delete data.bigPrizes;
+            saveData(data);
+            renderAdminPrizes();
+        }
+
+        // ==================== 奖励记录管理 ====================
+        function renderAdminRewards() {
+            const data = getData();
+            const container = document.getElementById('adminRewardsList');
+            
+            if (!data.rewards || data.rewards.length === 0) {
+                container.innerHTML = '<p style="color:#aaa; text-align:center;">暂无奖励记录</p>';
+                return;
+            }
+
+            let html = '';
+            data.rewards.forEach((r, i) => {
+                html += `
+                    <div class="reward-item" style="justify-content: space-between;">
+                        <span>${r.emoji} [${r.type}] ${r.text} <small style="color:#aaa;">${r.time}</small></span>
+                        <button class="btn btn-small btn-danger" onclick="deleteReward(${i})" style="padding:4px 10px; font-size:12px;">✕</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function deleteReward(index) {
+            const data = getData();
+            data.rewards.splice(index, 1);
+            saveData(data);
+            renderAdmin();
+        }
+
+        function clearRewards(type) {
+            const label = type === 'all' ? '所有' : (type === 'small' ? '小转盘' : '大转盘');
+            if (!confirm(`确定清空${label}奖励记录吗？`)) return;
+            const data = getData();
+            if (type === 'all') {
+                data.rewards = [];
+            } else if (type === 'small') {
+                data.rewards = data.rewards.filter(r => r.type !== '小转盘');
+            } else {
+                data.rewards = data.rewards.filter(r => r.type !== '大转盘');
+            }
+            saveData(data);
+            renderAdmin();
+        }
+
+        // ==================== 转盘测试 ====================
+        function testSmallWheel() {
+            document.getElementById('smallWheelModal').classList.add('show');
+            document.getElementById('smallWheelResult').classList.remove('show');
+            document.getElementById('smallWheelSpinBtn').style.display = 'block';
+            smallWheelAngle = 0;
+            drawWheel('smallWheelCanvas', getSmallWheelPrizes(), 0);
+        }
+
+        function testBigWheel() {
+            document.getElementById('bigWheelModal').classList.add('show');
+            document.getElementById('bigWheelResult').classList.remove('show');
+            document.getElementById('bigWheelSpinBtn').style.display = 'block';
+            bigWheelAngle = 0;
+            drawWheel('bigWheelCanvas', getBigWheelPrizes(), 0);
+            // 测试模式下临时增加一次次数
+            const data = getData();
+            data.bigWheelSpins += 1;
+            saveData(data);
+        }
+
+        function setActiveProject(id) {
+            const data = getData();
+            data.activeProjectId = id;
+            saveData(data);
+            renderAdmin();
+        }
+
+        function resetProject(id) {
+            if (!confirm('确定要重置这个项目吗？所有任务进度将清零。')) return;
+            const data = getData();
+            const project = data.projects.find(p => p.id === id);
+            if (project) {
+                project.tasks.forEach(t => t.completed = false);
+                project.bigWheelClaimed = false;
+                saveData(data);
+                renderAdmin();
+            }
+        }
+
+        function deleteProject(id) {
+            if (!confirm('确定要删除这个项目吗？')) return;
+            const data = getData();
+            data.projects = data.projects.filter(p => p.id !== id);
+            if (data.activeProjectId === id) {
+                data.activeProjectId = data.projects.length > 0 ? data.projects[0].id : null;
+            }
+            saveData(data);
+            renderAdmin();
+        }
+
+        function clearAllData() {
+            if (!confirm('⚠️ 确定要清空所有数据吗？此操作不可恢复！')) return;
+            if (!confirm('再次确认：真的要清空吗？')) return;
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+        }
+
+        function exportData() {
+            const data = getData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `任务小达人_${new Date().toLocaleDateString('zh-CN')}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    saveData(data);
+                    location.reload();
+                } catch (err) {
+                    alert('导入失败：文件格式错误');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ==================== 彩带特效 ====================
+        function showConfetti() {
+            const container = document.getElementById('confettiContainer');
+            const colors = ['#ff6b9d', '#ffd700', '#4ecdc4', '#a18cd1', '#ff8a5c', '#6bcb77'];
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                container.appendChild(confetti);
+            }
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 3500);
+        }
+
+        function showBigCelebration() {
+            const container = document.getElementById('confettiContainer');
+            const colors = ['#ff6b9d', '#ffd700', '#4ecdc4', '#a18cd1', '#ff8a5c', '#6bcb77', '#ff4757', '#00d2d3'];
+            
+            // 大量彩带
+            for (let i = 0; i < 120; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 1 + 's';
+                confetti.style.animationDuration = (Math.random() * 2 + 2.5) + 's';
+                confetti.style.borderRadius = Math.random() > 0.3 ? '50%' : '0';
+                confetti.style.width = (Math.random() * 14 + 6) + 'px';
+                confetti.style.height = (Math.random() * 14 + 6) + 'px';
+                container.appendChild(confetti);
+            }
+
+            // 大emoji烟花
+            const emojis = ['🎉', '🎊', '✨', '🌟', '💫', '🥳', '🏆', '👏'];
+            for (let i = 0; i < 12; i++) {
+                const emoji = document.createElement('div');
+                emoji.className = 'confetti';
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.left = Math.random() * 100 + '%';
+                emoji.style.fontSize = (Math.random() * 20 + 24) + 'px';
+                emoji.style.animationDelay = Math.random() * 1.5 + 's';
+                emoji.style.animationDuration = (Math.random() * 2 + 3) + 's';
+                emoji.style.background = 'none';
+                container.appendChild(emoji);
+            }
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // ==================== 浮动装饰 ====================
+        function createFloatingStars() {
+            const container = document.getElementById('floatingStars');
+            const emojis = ['⭐', '🌟', '✨', '💖', '🦋', '🌸', '🎀', '🍬'];
+            
+            for (let i = 0; i < 15; i++) {
+                const star = document.createElement('span');
+                star.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 6 + 's';
+                star.style.fontSize = (Math.random() * 15 + 15) + 'px';
+                container.appendChild(star);
+            }
+        }
+
+        // ==================== 初始化 ====================
+        createFloatingStars();
+        renderTaskPage();
+    </script>
+</body>
+</html>
