@@ -252,6 +252,8 @@
             justify-content: center;
             z-index: 1000;
             flex-direction: column;
+            overflow-y: auto;
+            padding: 15px;
         }
 
         .wheel-container.show {
@@ -285,16 +287,30 @@
 
         #bigWheelModal .wheel-title {
             font-size: 36px;
+            margin-bottom: 10px;
         }
 
         #bigWheelModal .wheel-result {
-            font-size: 30px;
-            padding: 18px 40px;
+            font-size: 28px;
+            padding: 14px 30px;
+            margin-top: 12px;
         }
 
         #bigWheelModal .wheel-pointer {
             font-size: 55px;
             top: -28px;
+        }
+
+        #bigWheelModal .wheel-btn {
+            position: fixed;
+            right: 30px;
+            top: 50%;
+            transform: translateY(-50%);
+            margin-top: 0;
+            writing-mode: vertical-rl;
+            padding: 25px 18px;
+            font-size: 22px;
+            border-radius: 20px;
         }
 
         .wheel-pointer {
@@ -316,15 +332,15 @@
         .wheel-title {
             color: white;
             font-size: 28px;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .wheel-result {
             color: white;
             font-size: 24px;
-            margin-top: 20px;
-            padding: 15px 30px;
+            margin-top: 12px;
+            padding: 12px 25px;
             background: rgba(255,255,255,0.2);
             border-radius: 15px;
             display: none;
@@ -355,7 +371,7 @@
         }
 
         .wheel-btn {
-            margin-top: 20px;
+            margin-top: 12px;
             background: linear-gradient(135deg, #ffd700, #ffaa00);
             color: #333;
             border: none;
@@ -611,6 +627,7 @@
     <div class="page" id="page-bigwheel">
         <h1 class="page-title">🎡 幸运大转盘</h1>
         <div class="big-wheel-info">
+            <p id="bigWheelProjectName" style="font-size: 18px; color: #7c5cbf; margin-bottom: 5px;">📌 无项目</p>
             <p style="font-size: 20px; color: #666;">完成所有任务就可以转大转盘啦！</p>
             <div class="big-wheel-count" id="bigWheelCount">0</div>
             <p style="font-size: 18px; color: #999;">可用抽奖次数</p>
@@ -661,6 +678,14 @@
                 <h3>✅ 任务管理</h3>
                 <p style="color:#999; font-size:14px; margin-bottom:10px;">管理当前项目的任务（修改状态、增加、删除）</p>
                 <div id="adminTaskStatus"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="admin-section">
+                <h3>🎡 大转盘次数管理</h3>
+                <p style="color:#999; font-size:14px; margin-bottom:10px;">调整当前项目的大转盘抽奖次数</p>
+                <div id="adminBigWheelSpins"></div>
             </div>
         </div>
 
@@ -748,16 +773,45 @@
 
         function getData() {
             const data = localStorage.getItem(STORAGE_KEY);
-            return data ? JSON.parse(data) : {
+            const parsed = data ? JSON.parse(data) : {
                 projects: [],
                 activeProjectId: null,
-                bigWheelSpins: 0,
                 rewards: []
             };
+            // 数据迁移：将全局bigWheelSpins迁移到各项目
+            if (typeof parsed.bigWheelSpins === 'number' && parsed.bigWheelSpins > 0) {
+                const activeProject = parsed.projects.find(p => p.id === parsed.activeProjectId);
+                if (activeProject) {
+                    activeProject.bigWheelSpins = (activeProject.bigWheelSpins || 0) + parsed.bigWheelSpins;
+                }
+                delete parsed.bigWheelSpins;
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+            }
+            // 确保每个项目有bigWheelSpins字段
+            parsed.projects.forEach(p => {
+                if (typeof p.bigWheelSpins !== 'number') p.bigWheelSpins = 0;
+            });
+            return parsed;
         }
 
         function saveData(data) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        // 获取当前项目的大转盘次数
+        function getActiveProjectSpins() {
+            const data = getData();
+            const project = data.projects.find(p => p.id === data.activeProjectId);
+            return project ? project.bigWheelSpins : 0;
+        }
+
+        function addSpinsToProject(projectId, count) {
+            const data = getData();
+            const project = data.projects.find(p => p.id === projectId);
+            if (project) {
+                project.bigWheelSpins = (project.bigWheelSpins || 0) + count;
+                saveData(data);
+            }
         }
 
         // ==================== 小转盘奖品 ====================
@@ -777,7 +831,7 @@
             { text: '谢谢惠顾', emoji: '😊', color: '#FFD93D', action: 'none' },
             { text: '蛤蟆警长介绍', emoji: '🐸', color: '#6BCB77', action: 'story' },
             { text: '2口蜜雪冰城', emoji: '🧋', color: '#45B7D1', action: 'drink2' },
-            { text: '5-7分钟时长', emoji: '⏰', color: '#4ECDC4', action: 'bigtime' },
+            { text: '人民币红包', emoji: '🧧', color: '#E74C3C', action: 'money' },
             { text: '自己3个俯卧撑', emoji: '🏋️', color: '#FF8A5C', action: 'pushup_self' },
             { text: '爸爸5个俯卧撑', emoji: '💪', color: '#A18CD1', action: 'pushup_dad' },
             { text: '2口蜜雪冰城', emoji: '🧋', color: '#FF6B9D', action: 'drink2' },
@@ -793,7 +847,15 @@
 
         function getBigWheelPrizes() {
             const data = getData();
-            return data.bigPrizes || defaultBigPrizes;
+            if (data.bigPrizes) {
+                // 如果已有自定义配置但缺少人民币红包，自动补上
+                if (!data.bigPrizes.some(p => p.action === 'money')) {
+                    data.bigPrizes.push({ text: '人民币红包', emoji: '🧧', color: '#E74C3C', action: 'money' });
+                    saveData(data);
+                }
+                return data.bigPrizes;
+            }
+            return defaultBigPrizes;
         }
 
         // ==================== 页面切换 ====================
@@ -910,7 +972,7 @@
                 let earlyBonus = false;
                 if (firstUncompletedIndex !== -1 && firstUncompletedIndex < taskIndex) {
                     earlyBonus = true;
-                    data.bigWheelSpins += 1;
+                    project.bigWheelSpins = (project.bigWheelSpins || 0) + 1;
                 }
                 
                 saveData(data);
@@ -930,7 +992,7 @@
             const project = data.projects.find(p => p.id === projectId);
             if (project && !project.bigWheelClaimed) {
                 project.bigWheelClaimed = true;
-                data.bigWheelSpins += 3;
+                project.bigWheelSpins = (project.bigWheelSpins || 0) + 3;
                 saveData(data);
                 showConfetti();
                 renderTaskPage();
@@ -987,8 +1049,11 @@
                 // 处理大转盘次数
                 if (prize.action === 'bigwheel') {
                     const data = getData();
-                    data.bigWheelSpins += 1;
-                    saveData(data);
+                    const project = data.projects.find(p => p.id === data.activeProjectId);
+                    if (project) {
+                        project.bigWheelSpins = (project.bigWheelSpins || 0) + 1;
+                        saveData(data);
+                    }
                 }
 
                 const resultEl = document.getElementById('smallWheelResult');
@@ -1011,15 +1076,20 @@
 
         function renderBigWheelPage() {
             const data = getData();
-            document.getElementById('bigWheelCount').textContent = data.bigWheelSpins;
+            const project = data.projects.find(p => p.id === data.activeProjectId);
+            const spins = project ? project.bigWheelSpins : 0;
+            const projectName = project ? project.name : '无项目';
+            document.getElementById('bigWheelCount').textContent = spins;
+            document.getElementById('bigWheelProjectName').textContent = `📌 ${projectName}`;
             const btn = document.getElementById('bigWheelBtn');
-            btn.disabled = data.bigWheelSpins <= 0;
-            btn.style.opacity = data.bigWheelSpins > 0 ? '1' : '0.5';
+            btn.disabled = spins <= 0;
+            btn.style.opacity = spins > 0 ? '1' : '0.5';
         }
 
         function openBigWheel() {
             const data = getData();
-            if (data.bigWheelSpins <= 0) {
+            const project = data.projects.find(p => p.id === data.activeProjectId);
+            if (!project || project.bigWheelSpins <= 0) {
                 alert('😅 没有大转盘抽奖次数了，快去完成任务吧！');
                 return;
             }
@@ -1037,9 +1107,10 @@
         function spinBigWheel() {
             if (bigWheelSpinning) return;
             const data = getData();
-            if (data.bigWheelSpins <= 0) return;
+            const project = data.projects.find(p => p.id === data.activeProjectId);
+            if (!project || project.bigWheelSpins <= 0) return;
             
-            data.bigWheelSpins -= 1;
+            project.bigWheelSpins -= 1;
             saveData(data);
             
             bigWheelSpinning = true;
@@ -1062,6 +1133,11 @@
                     const minutes = Math.floor(Math.random() * 2) + 1;
                     resultText = `⏰ 额外时长 ${minutes} 分钟！`;
                 }
+                
+                if (prize.action === 'money') {
+                    const jiao = Math.floor(Math.random() * 20) + 1;
+                    resultText = `🧧 人民币红包 ${jiao} 角！`;
+                }
 
                 const resultEl = document.getElementById('bigWheelResult');
                 resultEl.textContent = isWin ? `🎊 恭喜！${resultText}` : resultText;
@@ -1074,6 +1150,18 @@
                     showConfetti();
                 }
                 renderBigWheelPage();
+
+                // 如果还有剩余次数，显示"再来一次"按钮
+                const latestData = getData();
+                const latestProject = latestData.projects.find(p => p.id === latestData.activeProjectId);
+                const remainSpins = latestProject ? latestProject.bigWheelSpins : 0;
+                const spinBtn = document.getElementById('bigWheelSpinBtn');
+                if (remainSpins > 0) {
+                    spinBtn.textContent = `🎡 再来一次！（剩余 ${remainSpins} 次）`;
+                    spinBtn.style.display = 'block';
+                } else {
+                    spinBtn.style.display = 'none';
+                }
             });
         }
 
@@ -1289,6 +1377,7 @@
                 name,
                 tasks: newTasksList.map(t => ({ name: t, completed: false })),
                 bigWheelClaimed: false,
+                bigWheelSpins: 0,
                 createdAt: new Date().toISOString()
             };
             data.projects.push(project);
@@ -1335,10 +1424,48 @@
 
             // 渲染任务状态管理
             renderAdminTaskStatus();
+            // 渲染大转盘次数管理
+            renderAdminBigWheelSpins();
             // 渲染转盘配置
             renderAdminPrizes();
             // 渲染奖励管理
             renderAdminRewards();
+        }
+
+        // ==================== 大转盘次数管理 ====================
+        function renderAdminBigWheelSpins() {
+            const data = getData();
+            const container = document.getElementById('adminBigWheelSpins');
+            
+            if (!data.activeProjectId) {
+                container.innerHTML = '<p style="color:#aaa;">请先选择一个当前项目</p>';
+                return;
+            }
+
+            const project = data.projects.find(p => p.id === data.activeProjectId);
+            if (!project) { container.innerHTML = ''; return; }
+
+            const spins = project.bigWheelSpins || 0;
+            container.innerHTML = `
+                <div style="display:flex; align-items:center; gap:15px; flex-wrap:wrap;">
+                    <span style="font-size:16px; color:#7c5cbf;">📌 ${project.name}</span>
+                    <span style="font-size:16px;">当前次数：<strong style="font-size:24px; color:#ff6b9d;">${spins}</strong></span>
+                    <button class="btn btn-small btn-danger" onclick="adjustProjectSpins('${project.id}', -1)">➖ 减1</button>
+                    <button class="btn btn-small btn-green" onclick="adjustProjectSpins('${project.id}', 1)">➕ 加1</button>
+                    <button class="btn btn-small btn-green" onclick="adjustProjectSpins('${project.id}', 3)">➕ 加3</button>
+                    <button class="btn btn-small btn-purple" onclick="adjustProjectSpins('${project.id}', 5)">➕ 加5</button>
+                </div>
+            `;
+        }
+
+        function adjustProjectSpins(projectId, amount) {
+            const data = getData();
+            const project = data.projects.find(p => p.id === projectId);
+            if (project) {
+                project.bigWheelSpins = Math.max(0, (project.bigWheelSpins || 0) + amount);
+                saveData(data);
+                renderAdmin();
+            }
         }
 
         // ==================== 任务状态管理 ====================
@@ -1559,8 +1686,11 @@
             drawWheel('bigWheelCanvas', getBigWheelPrizes(), 0);
             // 测试模式下临时增加一次次数
             const data = getData();
-            data.bigWheelSpins += 1;
-            saveData(data);
+            const project = data.projects.find(p => p.id === data.activeProjectId);
+            if (project) {
+                project.bigWheelSpins = (project.bigWheelSpins || 0) + 1;
+                saveData(data);
+            }
         }
 
         function setActiveProject(id) {
